@@ -1,29 +1,28 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState } from "react";
 import axios from "axios";
 
 export const AuthContext = createContext(null);
 
-export function AuthProvider({ children }) {
+export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [cart, setCart] = useState([]);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      axios
-        .get("http://localhost:5000/api/users/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        .then(({ data }) => setUser(data))
-        .catch(() => {
-          localStorage.removeItem("token");
-          setUser(null);
-        });
+  const addToCart = async (medicineId, quantity = 1) => {
+    try {
+      const { data } = await axios.post("http://localhost:5000/cart/add", {
+        userId: user._id,
+        medicineId,
+        quantity,
+      });
+      setCart(data.cart.medicines);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
     }
-  }, []);
+  };
 
   return (
-    <AuthContext.Provider value={{ user, setUser }}>
+    <AuthContext.Provider value={{ user, setUser, cart, setCart, addToCart }}>
       {children}
     </AuthContext.Provider>
   );
-}
+};

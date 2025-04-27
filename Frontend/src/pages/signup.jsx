@@ -1,48 +1,61 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export default function Signup() {
-  const { register, handleSubmit } = useForm();
-  const [error, setError] = useState("");
   const navigate = useNavigate();
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [error, setError] = useState("");
 
-  const onSubmit = async (data) => {
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     try {
-      await axios.post("http://localhost:5000/api/users/signup", data);
+      await axios.post("http://localhost:5000/users/signup", form);
       navigate("/login");
     } catch (err) {
-      setError("Email already exists");
+      console.info("-------------------------------");
+      console.info("err => ", err);
+      console.info("-------------------------------");
+      setError("Failed to register. Try again.");
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="bg-white p-6 rounded-lg shadow-lg"
+        className="bg-white p-6 rounded-lg shadow-md w-80"
+        onSubmit={handleSubmit}
       >
-        <h2 className="text-xl font-bold mb-4">Signup</h2>
-        {error && <p className="text-red-500">{error}</p>}
+        <h2 className="text-2xl font-semibold text-center mb-4">Signup</h2>
+        {error && <p className="text-red-500 text-sm">{error}</p>}
         <input
-          {...register("name")}
+          className="w-full p-2 mb-3 border rounded"
+          type="text"
+          name="name"
           placeholder="Name"
-          className="border p-2 w-full mb-2"
+          onChange={handleChange}
+          required
         />
         <input
-          {...register("email")}
+          className="w-full p-2 mb-3 border rounded"
           type="email"
+          name="email"
           placeholder="Email"
-          className="border p-2 w-full mb-2"
+          onChange={handleChange}
+          required
         />
         <input
-          {...register("password")}
+          className="w-full p-2 mb-3 border rounded"
           type="password"
+          name="password"
           placeholder="Password"
-          className="border p-2 w-full mb-2"
+          onChange={handleChange}
+          required
         />
-        <button className="bg-green-500 text-white p-2 rounded w-full">
+        <button className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">
           Signup
         </button>
       </form>

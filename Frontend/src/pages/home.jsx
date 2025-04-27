@@ -1,41 +1,69 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import MedicineCard from "../components/MedicineCard";
+import SearchBar from "../components/SearchBar";
+import FilterSidebar from "../components/FilterSidebar";
 
 export default function Home() {
   const [medicines, setMedicines] = useState([]);
-  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState({
+    search: "",
+    category: "",
+    priceRange: [0, 1000],
+    sortBy: "price",
+    order: "asc",
+  });
 
   useEffect(() => {
-    axios
-      .get("http://localhost:5000/api/medicines")
-      .then(({ data }) => setMedicines(data));
-  }, []);
+    const fetchMedicines = async () => {
+      try {
+        const params = new URLSearchParams(filters);
+        const { data } = await axios.get(
+          `http://localhost:5000/medicines?${params.toString()}`
+        );
+        setMedicines(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-  const filteredMedicines = medicines.filter((med) =>
-    med.name.toLowerCase().includes(search.toLowerCase())
-  );
+    fetchMedicines();
+  }, [filters]);
 
   return (
-    <div className="p-6">
-      <input
-        type="text"
-        placeholder="Search medicines..."
-        className="border p-2 w-full mb-4"
-        onChange={(e) => setSearch(e.target.value)}
-      />
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {filteredMedicines.map((medicine) => (
-          <div
-            key={medicine._id}
-            className="p-4 border rounded shadow hover:shadow-lg"
+    <div className="flex">
+      <FilterSidebar filters={filters} setFilters={setFilters} />
+      <div className="flex-1 p-4">
+        <SearchBar filters={filters} setFilters={setFilters} />
+        <div className="mb-4">
+          <label className="mr-2 font-semibold">Sort By:</label>
+          <select
+            value={filters.sortBy}
+            onChange={(e) =>
+              setFilters((prev) => ({ ...prev, sortBy: e.target.value }))
+            }
+            className="p-2 border rounded-md"
           >
-            <h2 className="text-lg font-bold">{medicine.name}</h2>
-            <p className="text-gray-600">₹{medicine.price}</p>
-            <button className="bg-blue-500 text-white px-4 py-1 rounded mt-2">
-              View
-            </button>
-          </div>
-        ))}
+            <option value="price">Price</option>
+            <option value="name">Name</option>
+          </select>
+          <button
+            onClick={() =>
+              setFilters((prev) => ({
+                ...prev,
+                order: prev.order === "asc" ? "desc" : "asc",
+              }))
+            }
+            className="ml-2 p-2 bg-blue-500 text-white rounded-md"
+          >
+            {filters.order === "asc" ? "⬆️" : "⬇️"}
+          </button>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {medicines.map((medicine) => (
+            <MedicineCard key={medicine._id} medicine={medicine} />
+          ))}
+        </div>
       </div>
     </div>
   );
